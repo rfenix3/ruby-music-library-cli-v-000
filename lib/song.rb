@@ -4,7 +4,8 @@
 require 'pry'
 
 class Song
-  
+  extend Concerns::Findable
+
   attr_accessor :name
   attr_reader :artist, :genre
   
@@ -12,8 +13,8 @@ class Song
   
   def initialize(name, artist=nil, genre=nil)
     @name = name
-    @artist = artist unless artist == nil
-    @genre = genre unless genre == nil
+    self.artist = artist unless artist == nil
+    self.genre = genre unless genre == nil
   end
   
   def self.all
@@ -35,32 +36,41 @@ class Song
   end
   
   def artist=(artist)
-     self.artist = Artist.find_or_create_by_name(artist)
-#     binding.pry
-     artist.add_song(self) unless artist.songs.include?(self)
+    @artist = artist
+    artist.add_song(self)
   end
+  
+  def genre=(genre)
+    @genre = genre
+    genre.add_song(self)
+  end
+  
+  def self.find_by_name(name)
+    @@all.detect{|song| song.name == name}
+  end
+  
+  # def self.find_or_create_by_name(name)
+  #   self.find_by_name(name) || self.create(name)
+  # end
+  
+  # def self.create_from_filename(filename)
+
+  # end
+  
+  def self.new_from_filename(filename)
+    parts = filename.split(" - ")
+    artist_name, song_name, genre_name = parts[0], parts[1], parts[2].gsub(".mp3", "")
+
+    artist = Artist.find_or_create_by_name(artist_name)
+    genre = Genre.find_or_create_by_name(genre_name)
+
+    new(song_name, artist, genre)
+  end
+  
+  def self.create_from_filename(filename)
+    new_from_filename(filename).tap{ |s| s.save }
+  end
+  
 end
-
-  # it "initializes and saves the song" do
-  #     created_song = Song.create("Kaohsiung Christmas")
-
-  #     expect(Song.all).to include(created_song)  
-  
-  
-  # attr_reader :artist # belongs to artist
-  
-  # def artist=(artist) # Belongs to artist
-  #   raise AssociationTypeMismatchError, "#{author.class} received, Author expected." if !author.is_a?(Author)
-  #   @artist = artist
-  #   artist.add_song(self) unless artist.songs.include?(self)
-  # end
-
-  # attr_reader :category # Belongs to category
-
-  # def category=(category) # Belongs to category
-  #   raise AssociationTypeMismatchError, "#{category.class} received, Category expected." if !category.is_a?(Category)
-  #   @category = category
-  #   category.add_story(self) unless category.stories.include?(self)
-  # end
 
   
